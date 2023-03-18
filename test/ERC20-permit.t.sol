@@ -28,7 +28,7 @@ contract DreamTokenTest2 is Test {
         drm.transfer(alice, 50 ether);
         drm.transfer(bob, 50 ether);
     }
-    
+
     function testPermit() public {
         bytes32 structHash = keccak256(abi.encode(
             keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"), 
@@ -111,6 +111,4 @@ contract DreamTokenTest2 is Test {
         vm.expectRevert("INVALID_SIGNER");
         drm.permit(alice, address(this), 10 ether, 1 days, v, r, s);
     }
-
-
 }

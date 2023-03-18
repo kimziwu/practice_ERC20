@@ -1,0 +1,67 @@
+//SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+import "./EIP712.sol";
+
+contract ERC20 is EIP712("","") {
+    
+    // default 0
+    address public _owner;
+    string private  _name;
+    string private _symbol;
+    bool private _pause=false;
+    bytes32 _structHash=keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+    
+    mapping(address=>uint256) private _balances;
+    mapping(address=>uint) private _nonces;
+    mapping(address=>mapping(address=>uint256)) private _allowance;
+
+    modifier onlyOwner(){
+        require(msg.sender==_owner,"Only owner");
+        _;
+    }
+
+    constructor(string memory name, string memory version) {
+        _owner=msg.sender;
+        _name=name;
+        _symbol=version;
+    }
+
+    function transfer(address to, uint256 value) public {
+        _balances[to]+=value;
+    }
+
+    function pause() public {
+        require(_pause);
+    }
+
+    function approve(address, uint256) public {}
+
+    function transferFrom(address, address, uint256) public {}
+    
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {
+        require(block.timestamp<=deadline); 
+
+        bytes32 structHash=keccak256(abi.encode(_structHash, owner, spender, value, _nonces[owner], deadline));
+        bytes32 digest=_toTypedDataHash(structHash); // digest
+        address testOwner=ecrecover(digest,v,r,s);
+
+        _nonces[owner]+=1;
+        _allowance[owner][spender]=value;
+
+        require(testOwner==owner,"INVALID_SIGNER");
+        //require(testOwner!=address(0),"ECDSA");
+        //require(owner!=address(0));
+        //require(spender!=address(0));
+        require(_balances[owner]>=value);
+    }
+
+
+    function nonces(address to) public returns (uint256) {
+        return _nonces[to];
+    }
+    function allowance(address to, address from) public returns (uint256) {
+        return _allowance[to][from];
+    }
+}
